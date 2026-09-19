@@ -1,5 +1,5 @@
 import os
-
+import socket
 from fastapi import FastAPI, HTTPException
 
 from app.routers import audit, auth, compras, juegos, personas
@@ -40,4 +40,10 @@ def version():
     return {
         "version": os.getenv("API_VERSION", "dev"),
         "force_unhealthy": os.getenv("FORCE_UNHEALTHY", "false").lower() == "true",
+    }
+@app.get("/instance")
+def instance():
+    return {
+        "instance": socket.gethostname(),
+        "version": os.getenv("API_VERSION", "dev"),
     }
