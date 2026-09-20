@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "adaii-ut2-architecture-demo",
     "name": "ADAII UT2 - Rollback, Polimorfismo y Aspectos",
-    "description": "Coleccion para probar la API REST y demostrar las tacticas de arquitectura. Ejecutar Login primero para guardar automaticamente el JWT.",
+    "description": "Coleccion para probar la API REST y demostrar las tacticas de arquitectura. Ejecutar Login primero para guardar automaticamente el JWT. token y juegoId se guardan en variables de coleccion; el entorno solo configura la URL y las credenciales. Ejecutar POST /juegos antes de actualizar o eliminar el juego creado.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -76,6 +76,38 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /instance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/instance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "instance"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Instancia disponible', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('Identidad coherente con X-Instance-ID', function () {",
+                  "  pm.expect(data.instance).to.be.a('string').and.not.empty;",
+                  "  pm.expect(data.instance).to.eql(pm.response.headers.get('X-Instance-ID'));",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -268,8 +300,7 @@
                 "exec": [
                   "pm.test('Juego creado', function () { pm.response.to.have.status(201); });",
                   "const data = pm.response.json();",
-                  "pm.collectionVariables.set('juegoId', data.id_juego);",
-                  "}"
+                  "pm.collectionVariables.set('juegoId', data.id_juego);"
                 ]
               }
             }
