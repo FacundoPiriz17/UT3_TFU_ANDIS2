@@ -8,6 +8,7 @@ from app.services.compras import (
     crear_compra,
     eliminar_compra,
     recalcular_compra,
+    _buscar_compras,
 )
 from security.dependencies import obtener_usuario_actual
 
@@ -18,7 +19,7 @@ router = APIRouter(
 )
 
 
-def _respuesta(compra, politica: str):
+def _respuesta(compra, politica: str | None = None):
     return {
         "email_persona": compra.EmailPersona,
         "id_juego": compra.IdJuego,
@@ -28,6 +29,20 @@ def _respuesta(compra, politica: str):
     }
 
 
+@router.get("/{email_persona}")
+def listar_compras(
+    email_persona: str,
+    db: Session = Depends(get_db),
+):
+
+    compras = _buscar_compras(db, email_persona)
+
+    return [
+        _respuesta(compra)
+        for compra in compras
+    ]
+    
+    
 @router.post("", status_code=status.HTTP_201_CREATED)
 @auditar("GENERAR_COMPRA")
 def generar_compra(

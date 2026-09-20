@@ -18,6 +18,18 @@ def _buscar_compra(
         )
         .first()
     )
+    
+def _buscar_compras(
+    db: Session,
+    email_persona: str,
+) -> list[Compra]:
+    return (
+        db.query(Compra)
+        .filter(
+            Compra.EmailPersona == email_persona,
+        )
+        .all()
+    )
 
 
 def crear_compra(
