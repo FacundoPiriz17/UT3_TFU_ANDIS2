@@ -1,6 +1,6 @@
-# UT3_TFU — Sistema de Juegos (ADAII)
+# UT3_TFU - Sistema de Juegos (ADAII)
 
-API REST de juegos construida con **FastAPI**, **SQLAlchemy** y **MySQL**, desplegada en **Docker** con balanceo de carga. Este README explica la estructura del sistema tal como se modela en el diagrama de componentes (`diagrama de componentes.drawio.html`), y mapea cada elemento del diagrama con el código real del proyecto.
+API REST de juegos construida con **FastAPI**, **SQLAlchemy** y **MySQL**, desplegada en **Docker** con balanceo de carga. Este README explica la estructura del sistema tal como se modela en el diagrama de componentes, y mapea cada elemento del diagrama con el código real del proyecto.
 
 ---
 
@@ -24,14 +24,14 @@ Stack:
 
 El archivo tiene **2 páginas**. Como **todo el sistema corre dentro de contenedores Docker**, se realizaron dos diagramas separados por dimensiones del trabajo, para poder entender mejor el trabajo:
 
-1. **Main | Diagrama de Componentes** — componentes lógicos de la aplicación (subsistemas, módulos y sus relaciones).
-2. **Docker | Diagrama de Componentes** — despliegue físico de esos componentes en contenedores (qué imagen, qué puerto, cómo se conectan entre sí).
+1. **Main | Diagrama de Componentes** - componentes lógicos de la aplicación (subsistemas, módulos y sus relaciones).
+2. **Docker | Diagrama de Componentes** - despliegue físico de esos componentes en contenedores (qué imagen, qué puerto, cómo se conectan entre sí).
 
 <img src="docs/diagramas/diagrama-1-principal-componentes.png" alt="Diagrama de componentes lógicos" width="100%"><br>
-*Diagrama 1 — Componentes lógicos (Main).*
+*Diagrama 1 - Componentes lógicos (Main).*
 
 <img src="docs/diagramas/diagrama-2-docker-componentes.png" alt="Diagrama de despliegue en Docker" width="100%"><br>
-*Diagrama 2 — Despliegue en contenedores (Docker).*
+*Diagrama 2 - Despliegue en contenedores (Docker).*
 
 Notación UML usada:
 
@@ -40,7 +40,7 @@ Notación UML usada:
 - **Flecha punteada** — dependencia (se usa el componente al que apunta).
 - **Cilindro** — base de datos.
 
-### 2.1 Página 1 — Componentes lógicos
+### 2.1 Página 1 - Componentes lógicos
 
 #### Subsystem: Login
 
@@ -89,7 +89,7 @@ Archivos: `app/routers/compras.py`, `app/services/compras.py`, `app/strategies/c
 
 | Componente | Contenedor | Detalle |
 |-----------|-----------|---------|
-| **Cliente** | — | Curl / Postman contra `HTTP: 8000` |
+| **Cliente** | - | Curl / Postman contra `HTTP: 8000` |
 | **Ngnix** [sic] | `nginx:alpine` | Balanceador. Publica `8000:80`, delega en `fastapi_backend` (`nginx.conf`) |
 | **api1** | imagen `api` | FastAPI, `:8000` interno, healthcheck |
 | **api2** | imagen `api` | Mismo código/imagen que api1 (nota del diagrama) |
@@ -135,30 +135,58 @@ Las tablas se crean automáticamente al primer arranque de MySQL vía `docker-en
 
 ---
 
-## 5. Cómo ejecutar
+## 5. Ejecución y scripts de demostración
 
-Requisitos: Docker y Docker Compose.
+Requisitos: Docker Desktop/Engine iniciado, Docker Compose y Python 3.12+.
 
-**Despliegue con balanceo (api1 + api2 + Nginx):**
+Abrir una terminal en la carpeta del proyecto y ejecutar el menú:
 
-```bash
-cp .env.example .env      # ajustar claves JWT / MySQL
-docker compose up -d --build
-curl http://localhost:8000/        # → "API funcionando"
-curl http://localhost:8000/health  # → {"status":"ok"}
+**Windows - PowerShell:**
+
+```powershell
+.\run.ps1
 ```
 
-- API balanceada: `http://localhost:8000` (Nginx → api1/api2)
-- MySQL: `localhost:3307` (mapeado a `3306` interno)
-- Colección de pruebas: `postman/ADAII-UT2.postman_collection.json`
+Si PowerShell bloquea la ejecución de scripts:
 
-**Desarrollo (una sola instancia con hot reload):**
-
-```bash
-docker compose -f docker-compose.dev.yaml up -d --build
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\run.ps1
 ```
 
-Scripts auxiliares en `scripts/`: `start.sh`, `deploy.sh`, `build_version.sh`, `demo_tacticas.sh`, `demo_rollback.sh`.
+Este permiso aplica únicamente a la ventana actual de PowerShell.
+
+**Linux/macOS - Bash:**
+
+```bash
+bash run.sh
+```
+
+La configuración `.env` se crea automáticamente si no existe. El primer inicio puede tardar varios minutos mientras se descargan y construyen las imágenes.
+
+### Opciones del menú
+
+Los scripts están en `scripts/`, con versiones `.ps1` para PowerShell y `.sh` para Bash.
+
+| Opción | Script | Qué comprueba |
+|---|---|---|
+| 1 - Iniciar entorno | `start` | Construye la imagen, inicia los cuatro servicios y verifica su disponibilidad. |
+| 2 - Ver estado | `status` | Muestra los contenedores y comprueba que el entorno esté listo. |
+| 3 - Demo balanceo | `demo_scaling` | Distribución de solicitudes entre `api1.0` y `api2.0`: escalabilidad horizontal. |
+| 4 - Demo stateless / JWT | `demo_stateless` | Un único JWT funciona en solicitudes atendidas por ambas APIs. |
+| 5 - Demo ACID | `demo_acid` | Compra y Copia se guardan juntas; ante un fallo controlado, ninguna queda persistida. |
+| 6 - Demo tácticas TFU 2 | `demo_tacticas` | Strategy de precios y auditoría compartida y persistente. |
+| 7 - Demo rollback | `demo_rollback` | Una versión defectuosa provoca la recuperación automática de la versión anterior. |
+| 8 - Ver logs | Desde el menú | Muestra los registros recientes de los servicios. |
+| 9 - Detener entorno | `stop` | Detiene y elimina los contenedores, conservando los volúmenes de datos y auditoría. |
+| 0 - Salir | Desde el menú | Cierra el menú sin detener los contenedores. |
+
+### Acceso a la API
+
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/docs
+- Usuario demo: `demo@adaii.local`
+- Contraseña: `Demo123!`
 
 ---
 

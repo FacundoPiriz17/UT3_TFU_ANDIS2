@@ -59,9 +59,13 @@ def crear_compra(
         CostoCompra=costo,
     )
 
-    db.add(copia)
-    db.add(compra)
-    db.commit()
+    try:
+        db.add(copia)
+        db.add(compra)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(compra)
 
     return compra

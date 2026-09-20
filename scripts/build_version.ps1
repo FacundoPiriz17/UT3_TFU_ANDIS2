@@ -1,19 +1,5 @@
-param(
-    [string]$Version = "1.0",
-    [string]$ForceUnhealthy = "false"
-)
-
+param([string]$Version = "1.0", [string]$ForceUnhealthy = "false")
 $ErrorActionPreference = "Stop"
-
-Write-Host "Construyendo api:$Version (FORCE_UNHEALTHY=$ForceUnhealthy)"
-
-docker build `
-    -f "dockerfile" `
-    --build-arg "API_VERSION=$Version" `
-    --build-arg "FORCE_UNHEALTHY=$ForceUnhealthy" `
-    -t "api:$Version" `
-    .
-
-if ($LASTEXITCODE -ne 0) {
-    throw "No se pudo construir la imagen api:$Version."
-}
+$python = if ($env:PYTHON) { $env:PYTHON } elseif (Get-Command python -ErrorAction SilentlyContinue) { "python" } elseif (Get-Command py -ErrorAction SilentlyContinue) { "py" } else { throw "Instale Python 3.10+ o defina PYTHON con la ruta del ejecutable." }
+& $python "$PSScriptRoot/manage.py" build_version $Version $ForceUnhealthy
+exit $LASTEXITCODE
