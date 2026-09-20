@@ -1,81 +1,22 @@
+# Override: docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build
 services:
-  web:
+  api1:
+    image: api:dev
     build:
-      context: .
-      dockerfile: dockerfile
       args:
         API_VERSION: dev
         FORCE_UNHEALTHY: "false"
-
-    image: api:dev
-    container_name: fastapi_app
-
-    env_file:
-      - .env
-
-    environment:
-      MYSQL_HOST: db
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-db_games}
-      MYSQL_USER: ${MYSQL_USER:-db_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-db_password}
-      AUDIT_LOG_PATH: /app/logs/operaciones.txt
-
-    ports:
-      - "8000:8000"
-
-    depends_on:
-      db:
-        condition: service_healthy
-
     volumes:
       - .:/app
       - audit_logs:/app/logs
-
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
-        ]
-      interval: 5s
-      timeout: 3s
-      retries: 4
-      start_period: 5s
-
-  db:
-    image: mysql:8.4
-    container_name: mysql_db
-
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-db_games}
-      MYSQL_USER: ${MYSQL_USER:-db_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-db_password}
-
-    ports:
-      - "3307:3306"
-
+  api2:
+    image: api:dev
+    build:
+      args:
+        API_VERSION: dev
+        FORCE_UNHEALTHY: "false"
     volumes:
-      - mysqldata:/var/lib/mysql
-      - ./bd/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ./bd/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
-
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent && mysql -h localhost -u root -p$$MYSQL_ROOT_PASSWORD -D $$MYSQL_DATABASE -e 'SELECT 1 FROM Login LIMIT 1' --silent"
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-
-volumes:
-  mysqldata:
-  audit_logs:
+      - .:/app
+      - audit_logs:/app/logs
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

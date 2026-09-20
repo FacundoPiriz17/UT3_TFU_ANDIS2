@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from app.routers import audit, auth, compras, juegos, personas
 
 app = FastAPI(
-    title="ADAII UT2 - API de Juegos",
+    title="ADAII TFU3 - API de Juegos",
     version=os.getenv("API_VERSION", "dev"),
 )
 
@@ -14,6 +14,13 @@ app.include_router(personas.router)
 app.include_router(juegos.router)
 app.include_router(compras.router)
 app.include_router(audit.router)
+
+
+@app.middleware("http")
+async def identificar_instancia(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Instance-ID"] = os.getenv("INSTANCE_NAME", socket.gethostname())
+    return response
 
 
 @app.get("/")
@@ -44,6 +51,6 @@ def version():
 @app.get("/instance")
 def instance():
     return {
-        "instance": socket.gethostname(),
+        "instance": os.getenv("INSTANCE_NAME", socket.gethostname()),
         "version": os.getenv("API_VERSION", "dev"),
     }

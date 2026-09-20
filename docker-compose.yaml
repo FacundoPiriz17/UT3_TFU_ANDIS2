@@ -8,7 +8,7 @@ x-api-common: &api-common
   env_file:
     - .env
 
-  environment:
+  environment: &api-environment
     MYSQL_HOST: db
     MYSQL_PORT: 3306
     MYSQL_DATABASE: ${MYSQL_DATABASE:-db_games}
@@ -46,12 +46,23 @@ x-api-common: &api-common
 services:
   api1:
     <<: *api-common
+    environment:
+      <<: *api-environment
+      INSTANCE_NAME: api1.0
 
   api2:
     <<: *api-common
+    environment:
+      <<: *api-environment
+      INSTANCE_NAME: api2.0
 
   nginx:
     image: nginx:alpine
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1/health']
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
     ports:
       - '8000:80'
@@ -69,16 +80,12 @@ services:
 
   db:
     image: mysql:8.4
-    container_name: mysql_db2
 
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-db_games}
       MYSQL_USER: ${MYSQL_USER:-db_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-db_password}
-
-    ports:
-      - '3307:3306'
 
     volumes:
       - mysqldata:/var/lib/mysql
